@@ -1,46 +1,33 @@
-library identifier: 'Jenkins-shared-library@master', retriever: modernSCM(
-    [$class: 'GitSCMSource',
-    remote: 'https://gitlab.com/vee8574135/jenkins-shared-library.git', // ✅ Fixed
-    credentialsId: 'gitlab-credentials'])
-
-def gv
-
 pipeline {
     agent any
-    tools {
-        maven 'maven-3.9'
-    }
+
     stages {
-        stage("init") {
+        stage('Test') {
             steps {
                 script {
-                    gv = load "script.groovy"
+                    echo "Executing pipeline for branch: ${env.BRANCH_NAME}"
                 }
             }
         }
 
-        stage("build jar") {
+        stage('Build') {
+            when {
+                expression { env.BRANCH_NAME == 'master' }
+            }
             steps {
                 script {
-                    buildJar()
+                    echo "Building the application..."
                 }
             }
         }
 
-        stage("build and push image") {
-            steps {
-                script {
-                    buildImage 'vinny100/demo-app:jma-9.0'
-                    dockerLogin()
-                    dockerPush 'vinny100/demo-app:jma-9.0'
-                }
+        stage('Deploy') {
+            when {
+                expression { env.BRANCH_NAME == 'master' }
             }
-        }
-
-        stage("deploy") {
             steps {
                 script {
-                    gv.deployApp()
+                    echo "Deploying the application..."
                 }
             }
         }
