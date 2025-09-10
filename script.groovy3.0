@@ -1,21 +1,26 @@
-def buildJar() {
+def buildJar = {
     echo 'Building the application...'
     sh 'mvn package'
 }
 
-def buildImage() {
+def buildImage = {
     echo "Building the Docker image..."
     withCredentials([usernamePassword(credentialsId: 'docker-credentials', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
-        def IMAGE_TAG = "vinny100/demo-app:jma-${env.BUILD_NUMBER ?: 'latest'}"
-        
-        sh "docker build -t ${IMAGE_TAG} ."
+        sh 'docker build -t vinny100/demo-app:jma-3.4 .'
         sh 'echo $PASS | docker login -u $USER --password-stdin'
-        sh "docker push ${IMAGE_TAG}"
+        sh 'docker push vinny100/demo-app:jma-3.4'
     }
 }
 
-def deployApp() {
+def deployApp = {
     echo 'Deploying the application...'
 }
 
-return this
+// Return functions as a map
+return [
+    buildJar   : buildJar,
+    buildImage : buildImage,
+    deployApp  : deployApp
+]
+
+

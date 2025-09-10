@@ -1,0 +1,55 @@
+pipeline {
+    agent any
+
+    parameters {
+        choice(name: 'VERSION', choices: ['1.1.0', '1.2.0', '1.3.0'], description: 'Select the version to deploy')
+        booleanParam(name: 'executeTests', defaultValue: true, description: 'Should tests be executed?')
+    }
+
+    stages {
+        stage('Load Script') {
+            steps {
+                script {
+                    // Load the external Groovy script
+                    groovyScript = load 'script.groovy2'
+                }
+            }
+        }
+
+        stage('Build') {
+            steps {
+                script {
+                    // Call the build method from the Groovy script
+                    groovyScript.buildApp()
+                }
+            }
+        }
+
+        stage('Test') {
+            when { expression { params.executeTests } }
+            steps {
+                script {
+                    // Call the test method from the Groovy script
+                    groovyScript.testApp()
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                script {
+                    // Prompt user for input and store the chosen environment in env.ENV
+                    env.ENV = input message: "Select the environment to deploy to",
+                                    ok: "Completed",
+                                    parameters: [choice(name: 'ENV', choices: ['dev', 'staging', 'production'], description: 'Select the environment to deploy')]
+
+                    // Call the deployApp method from the Groovy script
+                    groovyScript.deployApp(params.VERSION)
+
+                    // Print the selected environment
+                    echo "Deploying to environment: ${env.ENV}"
+                }
+            }
+        }
+    }
+}
